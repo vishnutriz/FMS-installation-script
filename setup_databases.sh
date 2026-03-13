@@ -324,20 +324,23 @@ if [ "$RUN_MONGO" = true ]; then
         # Hash customer admin password
         log_info "Hashing customer admin password..."
         
-        # Check if bcrypt is available
-        if ! sudo -u "$REAL_USER" bash -c "source $REAL_HOME/.nvm/nvm.sh && node -e \"require('bcrypt')\"" 2>/dev/null; then
-            log_warning "bcrypt not found. Installing bcrypt..."
+        # Check if bcryptjs is available (pure-JS, no build tools needed)
+        if ! sudo -u "$REAL_USER" bash -c "source $REAL_HOME/.nvm/nvm.sh && node -e \"require('bcryptjs')\"" 2>/dev/null; then
+            log_warning "bcryptjs not found. Installing bcryptjs..."
             
-            if sudo -u "$REAL_USER" bash -c "source $REAL_HOME/.nvm/nvm.sh && npm install -g bcrypt" >> "$LOG_FILE" 2>&1; then
-                log_success "bcrypt installed successfully."
+            if sudo -u "$REAL_USER" bash -c "source $REAL_HOME/.nvm/nvm.sh && npm install -g bcryptjs" >> "$LOG_FILE" 2>&1; then
+                log_success "bcryptjs installed successfully."
             else
-                log_error "Failed to install bcrypt."
+                log_error "Failed to install bcryptjs."
                 exit 1
             fi
         fi
         
-        CUSTOMER_ADMIN_HASH=$(sudo -u "$REAL_USER" bash -c "source $REAL_HOME/.nvm/nvm.sh && node -e \"
-        const bcrypt = require('bcrypt');
+        CUSTOMER_ADMIN_HASH=$(sudo -u "$REAL_USER" bash -c "
+            source $REAL_HOME/.nvm/nvm.sh
+            export NODE_PATH=\$(npm root -g)
+            node -e \"
+        const bcrypt = require('bcryptjs');
         const hash = bcrypt.hashSync('${CUSTOMER_ADMIN_PASS}', 12);
         console.log(hash);
         \"" 2>&1)
