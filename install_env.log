@@ -1,0 +1,10 @@
+==========================================
+Installation started at Mon Feb  9 11:49:46 AM IST 2026
+==========================================
+[INFO] Checking internet connectivity...
+[SUCCESS] Internet connection active.
+[SUCCESS] Node.js v22.14.0 is already installed and active.
+[INFO] Node Version: v22.14.0
+[INFO] NPM Version: 10.9.2
+[SUCCESS] create-next-app is already installed.
+[SUCCESS] Node.js and Next.js environment ready.
