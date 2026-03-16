@@ -41,9 +41,30 @@ if [ "$MOSQUITTO_INSTALLED" = true ]; then
     if command_exists mosquitto; then
         mosquitto -h | head -n 1
     fi
-    systemctl start mosquitto 2>/dev/null || true
-    systemctl enable mosquitto 2>/dev/null || true
-    exit 0
+    
+    # Check if certificates are missing even if installed
+    CERT_SOURCE_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )/mosquitto_certs"
+    if [ ! -f "/etc/mosquitto/certs/ca.crt" ] || [ ! -f "/etc/mosquitto/certs/broker.crt" ] || [ ! -f "/etc/mosquitto/certs/broker.key" ]; then
+        log_warning "Mosquitto is installed but certificates are missing or incomplete."
+        echo -n "Do you want to (re)configure certificates and TLS settings? (y/n): "
+        read -n 1 -r
+        echo ""
+        if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+            log_info "Skipping Mosquitto configuration."
+            exit 0
+        fi
+        # Continue to configuration section
+    else
+        log_success "Mosquitto certificates already present."
+        echo -n "Do you want to reconfigure Mosquitto? (y/n): "
+        read -n 1 -r
+        echo ""
+        if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+            log_info "Skipping Mosquitto configuration."
+            exit 0
+        fi
+        # Continue to configuration section
+    fi
 fi
 
 # 1. Add Mosquitto PPA

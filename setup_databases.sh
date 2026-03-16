@@ -324,29 +324,40 @@ if [ "$RUN_MONGO" = true ]; then
         # Hash customer admin password
         log_info "Hashing customer admin password..."
         
-        # Check if bcryptjs is available (pure-JS, no build tools needed)
-        if ! sudo -u "$REAL_USER" bash -c "source $REAL_HOME/.nvm/nvm.sh && node -e \"require('bcryptjs')\"" 2>/dev/null; then
-            log_warning "bcryptjs not found. Installing bcryptjs..."
-            
+        # Check if bcryptjs is available
+        if ! sudo -u "$REAL_USER" bash -c "source $REAL_HOME/.nvm/nvm.sh && node -e \"require('bcryptjs')\"" &>/dev/null; then
+            log_warning "bcryptjs not found. Installing bcryptjs globally..."
             if sudo -u "$REAL_USER" bash -c "source $REAL_HOME/.nvm/nvm.sh && npm install -g bcryptjs" >> "$LOG_FILE" 2>&1; then
                 log_success "bcryptjs installed successfully."
             else
-                log_error "Failed to install bcryptjs."
-                exit 1
+                log_error "Failed to install bcryptjs globally. Trying local installation..."
+                if sudo -u "$REAL_USER" bash -c "source $REAL_HOME/.nvm/nvm.sh && npm install bcryptjs" >> "$LOG_FILE" 2>&1; then
+                    log_success "bcryptjs installed locally."
+                else
+                    log_error "Failed to install bcryptjs. Cannot proceed with password hashing."
+                    exit 1
+                fi
             fi
         fi
         
         CUSTOMER_ADMIN_HASH=$(sudo -u "$REAL_USER" bash -c "
             source $REAL_HOME/.nvm/nvm.sh
-            export NODE_PATH=\$(npm root -g)
+            # Try to find bcryptjs in global or local node_modules
+            export NODE_PATH=\"\$(npm root -g):./node_modules\"
             node -e \"
-        const bcrypt = require('bcryptjs');
-        const hash = bcrypt.hashSync('${CUSTOMER_ADMIN_PASS}', 12);
-        console.log(hash);
-        \"" 2>&1)
+                try {
+                    const bcrypt = require('bcryptjs');
+                    const hash = bcrypt.hashSync('${CUSTOMER_ADMIN_PASS}', 12);
+                    console.log(hash);
+                } catch (e) {
+                    console.error('Error during hashing: ' + e.message);
+                    process.exit(1);
+                }
+            \"" 2>&1)
 
-        if [ -z "$CUSTOMER_ADMIN_HASH" ] || [[ "$CUSTOMER_ADMIN_HASH" == *"Error"* ]]; then
+        if [ $? -ne 0 ] || [ -z "$CUSTOMER_ADMIN_HASH" ] || [[ "$CUSTOMER_ADMIN_HASH" == *"Error"* ]]; then
             log_error "Failed to hash customer admin password."
+            log_error "Raw output: ${CUSTOMER_ADMIN_HASH}"
             exit 1
         fi
         

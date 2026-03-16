@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # install_influx.sh
-# Installs InfluxDB 2.0 OSS based on specific user guide
+# Installs InfluxDB 2.0 OSS based on official InfluxData guidelines
 
 source ./utils.sh
 
@@ -11,92 +11,86 @@ print_header "InfluxDB 2.0 Installation"
 check_root
 check_internet
 
-# Check if InfluxDB is already installed (multiple methods)
+# Check if InfluxDB is already installed
 INFLUX_INSTALLED=false
-
-# Method 1: Check if influx command exists
-if command_exists influx; then
-    INFLUX_INSTALLED=true
-fi
-
-# Method 2: Check if influxdb2 package is installed
-if dpkg -s influxdb2 &> /dev/null; then
-    INFLUX_INSTALLED=true
-fi
-
-# Method 3: Check if influxdb service exists and is active
-if systemctl is-active --quiet influxdb 2>/dev/null; then
+if command_exists influx || dpkg -s influxdb2 &> /dev/null; then
     INFLUX_INSTALLED=true
 fi
 
 if [ "$INFLUX_INSTALLED" = true ]; then
     log_success "InfluxDB is already installed."
-    if command_exists influx; then
-        influx version
-    fi
     systemctl start influxdb 2>/dev/null || true
     systemctl enable influxdb 2>/dev/null || true
     exit 0
 fi
 
-# 1. Add InfluxData GPG Key
-if [ -f /etc/apt/trusted.gpg.d/influxdata-archive_compat.gpg ]; then
-    log_info "InfluxData GPG key already exists, skipping download..."
-else
-    log_info "Downloading and verifying InfluxData GPG key..."
-    wget -q https://repos.influxdata.com/influxdata-archive_compat.key -O influxdata-archive_compat.key
-
-    # Verify checksum as per guide
-    echo '393e8779c89ac8d958f81f942f9ad7fb82a25e133faddaf92e15b16e6ac9ce4c  influxdata-archive_compat.key' | sha256sum -c &> /dev/null
-
-    if [ $? -eq 0 ]; then
-        log_success "GPG Key checksum verified."
-        cat influxdata-archive_compat.key | gpg --dearmor | tee /etc/apt/trusted.gpg.d/influxdata-archive_compat.gpg > /dev/null
-    else
-        log_error "GPG Key checksum FAILED. Aborting."
-        rm influxdata-archive_compat.key
-        exit 1
-    fi
-    rm influxdata-archive_compat.key
+# Ensure curl is installed (needed for the doc pipeline)
+if ! command_exists curl; then
+    log_info "curl not found. Installing curl..."
+    apt-get update > /dev/null
+    apt-get install -y curl
 fi
 
-# 2. Add InfluxDB Repository
-log_info "Adding InfluxDB repository..."
-echo 'deb [signed-by=/etc/apt/trusted.gpg.d/influxdata-archive_compat.gpg] https://repos.influxdata.com/debian stable main' | tee /etc/apt/sources.list.d/influxdata.list
+# Ensure gpg is installed
+if ! command_exists gpg; then
+    log_info "gnupg not found. Installing gnupg..."
+    apt-get update > /dev/null
+    apt-get install -y gnupg
+fi
 
-# 3. Update and Install InfluxDB
-log_info "Updating package lists..."
-apt-get update > /dev/null 2>&1
+# 1. Official InfluxData Installation Pipeline
+log_info "Running official InfluxData installation pipeline..."
+mkdir -p /etc/apt/keyrings
 
-log_info "Installing influxdb2..."
-apt-get install -y influxdb2 &
-PID=$!
-show_spinner $PID
-wait $PID
+# Remove old keys/repo to ensure a clean run
+rm -f /etc/apt/trusted.gpg.d/influxdata-archive_compat.gpg
+rm -f /etc/apt/keyrings/influxdata-archive.gpg
+rm -f /etc/apt/sources.list.d/influxdata.list
+
+# Exact command sequence from documentation
+curl --silent --location -O https://repos.influxdata.com/influxdata-archive.key \
+&& gpg --show-keys --with-fingerprint --with-colons ./influxdata-archive.key 2>&1 \
+| grep -q '^fpr:\+24C975CBA61A024EE1B631787C3D57159FC2F927:$' \
+&& cat influxdata-archive.key \
+| gpg --dearmor \
+| tee /etc/apt/keyrings/influxdata-archive.gpg > /dev/null \
+&& echo 'deb [signed-by=/etc/apt/keyrings/influxdata-archive.gpg] https://repos.influxdata.com/debian stable main' \
+| tee /etc/apt/sources.list.d/influxdata.list
 
 if [ $? -eq 0 ]; then
-    log_success "InfluxDB 2 installed."
+    log_success "Repository and GPG key configured."
+    rm -f influxdata-archive.key
 else
-    log_error "Failed to install InfluxDB 2."
+    log_error "Failed to configure repository. Fingerprint might not match or network error."
+    rm -f influxdata-archive.key
     exit 1
 fi
 
-# 4. Start the InfluxDB Service
+# 2. Update and Install InfluxDB
+log_info "Updating package lists and installing influxdb2..."
+if apt-get update && apt-get install -y influxdb2; then
+    log_success "InfluxDB 2 installed successfully."
+else
+    log_error "Failed to install influxdb2 package."
+    exit 1
+fi
+
+# 3. Start the InfluxDB Service
 log_info "Starting InfluxDB service..."
+systemctl daemon-reload
 systemctl start influxdb
 systemctl enable influxdb
 
 if systemctl is-active --quiet influxdb; then
     log_success "InfluxDB service is running."
 else
-    log_error "InfluxDB service failed to start."
+    log_error "InfluxDB service failed to start. Check 'journalctl -u influxdb' for details."
     exit 1
 fi
 
-# 5. Run the Initial Setup (Instruction)
+# 4. Run the Initial Setup
 print_header "Next Steps: Initial Setup"
 log_warning "You MUST run the initial setup manually."
-echo -e "${YELLOW}Run the following command in your terminal:${NC}"
+echo -e "${YELLOW}Run the following command:${NC}"
 echo -e "${GREEN}influx setup${NC}"
-echo "Follow the prompts to create your primary user, organization, and bucket."
 echo "UI Access: http://localhost:8086"
