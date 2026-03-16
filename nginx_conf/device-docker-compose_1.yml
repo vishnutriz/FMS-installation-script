@@ -1,0 +1,76 @@
+services:
+  device-core:
+    build: ../FMS-device-core
+    env_file:
+      - ../FMS-device-core/.env
+    volumes:
+      - ../certs/internal/device-core.crt:/etc/service-certs/cert.crt:ro
+      - ../certs/internal/device-core.key:/etc/service-certs/cert.key:ro
+      - $HOME/FMS-localstorage/license:/app/license:ro
+      - /sys:/sys:ro
+      # Mount MQTT certs
+      - /home/govindtriz22/machine_mqtt_certs/ca.crt:/etc/mqtt-certs/ca.crt:ro
+      - /home/govindtriz22/machine_mqtt_certs/client.crt:/etc/mqtt-certs/client.crt:ro
+      - /home/govindtriz22/machine_mqtt_certs/client.key:/etc/mqtt-certs/client.key:ro
+    environment:
+      - HOST=0.0.0.0
+      - DATABASE_URL=postgresql://admin:password@host.docker.internal:5432/devices
+      - DB_SYNCHRONIZE=false
+      - INFLUX_URL=http://host.docker.internal:8086
+      - KAFKA_BROKERS=host.docker.internal:9092
+      - KAFKA_BROKERS_JSON=["host.docker.internal:9092"]
+      - KAFKA_CLIENT_ID=device-telemetry-service
+      - KAFKA_GROUP_ID=device-telemetry-group
+      - KAFKAJS_NO_PARTITIONER_WARNING=1
+      - TYPEORM_ENTITIES=dist/models/**/*.js
+      - TYPEORM_MIGRATIONS=dist/migrations/**/*.js
+      - LICENSE_PATH=/app/license/license.lic
+      - CORS_ORIGINS=["http://localhost:5173","http://localhost:3000","https://localhost:8443"]
+      - ENABLE_HTTPS=true
+      - SSL_CERT_PATH=/etc/service-certs/cert.crt
+      - SSL_KEY_PATH=/etc/service-certs/cert.key
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    command: ["node", "dist/server.js", "--port", "8004"]
+    restart: unless-stopped
+    networks:
+      - fmsnet
+
+  # traffic-management-service:
+  #   build: ../traffic-management-service
+  #   ports:
+  #     - "8009:8009"
+  #   volumes:
+  #     - ../certs/internal/traffic-management-service.crt:/etc/service-certs/cert.crt:ro
+  #     - ../certs/internal/traffic-management-service.key:/etc/service-certs/cert.key:ro
+  #     - $HOME/FMS-localstorage/license:/app/license:ro
+  #     - /sys:/sys:ro
+  #   environment:
+  #     - NODE_ENV=production
+  #     - PORT=8009
+  #     - DATABASE_URL=postgresql://admin:password@host.docker.internal:5432/traffic_management
+  #     - KAFKA_BROKERS=host.docker.internal:9092
+  #     - KAFKA_CLIENT_ID=traffic-management-service
+  #     - KAFKA_GROUP_ID=traffic-management-group
+  #     - CORS_ORIGINS=["http://localhost:5173","http://localhost:3000","https://localhost:8443"]
+  #     - FMS_MISSION_SERVICE_URL=https://mission-service:8005
+  #     - FMS_DEVICE_CORE_URL=https://device-core:8004
+  #     - DEPLOYMENT_SERVICE_URL=https://deployment-service:8006/api
+  #     - PG_HOST=host.docker.internal
+  #     - PG_PORT=5432
+  #     - PG_USER=admin
+  #     - PG_PASSWORD=password
+  #     - PG_DATABASE=traffic_management
+  #     - ENABLE_HTTPS=true
+  #     - SSL_CERT_PATH=/etc/service-certs/cert.crt
+  #     - SSL_KEY_PATH=/etc/service-certs/cert.key
+  #     - LICENSE_PATH=/app/license/license.lic
+  #   extra_hosts:
+  #     - "host.docker.internal:host-gateway"
+  #   restart: unless-stopped
+  #   networks:
+  #     - fmsnet
+
+networks:
+  fmsnet:
+    driver: bridge
