@@ -37,8 +37,12 @@ services:
     networks:
       - fmsnet
 
+
   application-service:
-    image: fms-application-service:fms-1.1
+    build:
+      context: ./FMS-application-service
+      dockerfile: Dockerfile.prod
+    image: fms-application-service:latest
     container_name: application-service
     volumes:
       - ./certs/internal/application-service.crt:/etc/service-certs/cert.crt:ro
@@ -68,7 +72,10 @@ services:
       - fmsnet
 
   user-service:
-    image: fms-user-service:fms-1.1 # <-- Added image name
+    build:
+      context: ./FMS-usermanagement
+      dockerfile: Dockerfile.prod
+    image: fms-user-service:latest # <-- Added image name
     container_name: user-service
     # network_mode: "host"
     volumes:
@@ -93,8 +100,12 @@ services:
     networks:
       - fmsnet
 
+
   device-core:
-    image: fms-device-core:fms-1.1
+    build:
+      context: ./FMS-device-core
+      dockerfile: Dockerfile.prod
+    image: fms-device-core:latest
     container_name: device-core
     user: root
     volumes:
@@ -133,14 +144,14 @@ services:
       - MQTT_CA_CERT_PATH=/etc/mqtt-certs/ca.crt
       - MQTT_CLIENT_CERT_PATH=/etc/mqtt-certs/client.crt
       - MQTT_CLIENT_KEY_PATH=/etc/mqtt-certs/client.key
-      - ENABLE_LOGGING=true # Master switch to enable/disable all logging
-      - LOG_LEVEL=info # Log level: error, warn, info, http, debug
-      - LOG_FORMAT=simple # Log format: simple (default), json
-      - NODE_ENV=development # Environment: development, production
-      - ENABLE_FILE_LOGGING=false # Enable file-based logging (auto-enabled in production)
-      - LOG_FILE_MAX_SIZE=20m # Maximum size per log file
-      - LOG_FILE_MAX_FILES=14d # Log retention period
-      - SHOW_LOG_FILE_NAME=false # Show log file name in logs (optional)
+      - ENABLE_LOGGING=true                    # Master switch to enable/disable all logging
+      - LOG_LEVEL=info                         # Log level: error, warn, info, http, debug
+      - LOG_FORMAT=simple                      # Log format: simple (default), json
+      - NODE_ENV=development                   # Environment: development, production
+      - ENABLE_FILE_LOGGING=false              # Enable file-based logging (auto-enabled in production)
+      - LOG_FILE_MAX_SIZE=20m                  # Maximum size per log file
+      - LOG_FILE_MAX_FILES=14d                 # Log retention period
+      - SHOW_LOG_FILE_NAME=false               # Show log file name in logs (optional)
     extra_hosts:
       - "host.docker.internal:host-gateway"
     command: ["node", "dist/server.js"]
@@ -148,8 +159,12 @@ services:
     networks:
       - fmsnet
 
+
   mission-service:
-    image: fms-mission-service:fms-1.1
+    build:
+      context: ./FMS-mission-service
+      dockerfile: Dockerfile.prod
+    image: fms-mission-service:latest
     container_name: mission-service
     command: ["node", "dist/index.js"]
     ports:
@@ -173,8 +188,12 @@ services:
     networks:
       - fmsnet
 
+
   deployment-service:
-    image: fms-deployment-service:fms-1.1
+    build:
+      context: ./FMS-deployment-service
+      dockerfile: Dockerfile.prod
+    image: fms-deployment-service:latest
     container_name: deployment-service
     user: root
     env_file:
@@ -208,8 +227,12 @@ services:
     networks:
       - fmsnet
 
+
   dashboard-service:
-    image: fms-dashboard-service:fms-1.1
+    build:
+      context: ./FMS-dashboard-services
+      dockerfile: Dockerfile.prod
+    image: fms-dashboard-service:latest
     container_name: dashboard-service
     ports:
       - "8007:8007"
@@ -231,8 +254,12 @@ services:
     networks:
       - fmsnet
 
+
   alert-service:
-    image: fms-alert-service:fms-1.1
+    build:
+      context: ./FMS-alert-service
+      dockerfile: Dockerfile.prod
+    image: fms-alert-service:latest
     container_name: alert-service
     ports:
       - "8008:8008"
@@ -262,8 +289,12 @@ services:
     networks:
       - fmsnet
 
+
   traffic-management-service:
-    image: fms-traffic-management-service:fms-1.1
+    build:
+      context: ./traffic-management-service
+      dockerfile: Dockerfile.prod
+    image: fms-traffic-management-service:latest
     container_name: traffic-management-service
     ports:
       - "8009:8009"
@@ -302,7 +333,10 @@ services:
       - fmsnet
 
   analytics-service:
-    image: fms-analytics-service:fms-1.1
+    build:
+      context: ./FMS-analytics-services
+      dockerfile: Dockerfile.prod
+    image: fms-analytics-service:latest
     container_name: analytics-service
     ports:
       - "8010:8010"
@@ -326,8 +360,12 @@ services:
     networks:
       - fmsnet
 
+
   log-service:
-    image: fms-log-service:fms-1.1
+    build:
+      context: ./FMS-log-service
+      dockerfile: Dockerfile.prod
+    image: fms-log-service:latest
     container_name: log-service
     ports:
       - "8011:8011"
@@ -353,7 +391,23 @@ services:
       - fmsnet
 
   fmscore-frontend:
-    image: fmscore-frontend:fms-1.1
+    build:
+      context: ./FMSCore
+      dockerfile: Dockerfile.prod
+      args:
+        NEXT_PUBLIC_API_BASE_URL: https://neev3.trizlabz.com:8443
+        NEXT_PUBLIC_BASE_URL: https://neev3.trizlabz.com:8443
+        NEXT_PUBLIC_WS_URL: https://neev3.trizlabz.com:8443
+        SERVER_IP: neev3.trizlabz.com
+        NEXT_PUBLIC_MAP_VIEW_API: https://asaichi.dnha.ap.fiot.globaldenso.com/api/widgets/getKPIValuesByLines
+        NEXT_PUBLIC_MAP_VIEW_API_TOKEN: 3082010A0282010100E1C31BB7EE4280D5AC0CB69ABE4593615B28165D074E8EED2AF5AA7EC1CB7F10D09AB6D8319E5A9DAD87D6CC484719AC72BB8FB19770FA37FE054F3D25A4FF9AB665BFC3B3884B766FDC758BFF47F5F0BB6D6075871273B4181E11AB07FAF82F984EBD9DD5C0B7FD3C91B0F0F7CB7509F252191678567FF5B7312DBE3AB6EB5A96A75FC52F6E938C0B1790C8AA2366B8CDEC7AEFAB5DCEE0BEEBC0ADC3281694B4922FBE43AB2A9AE30AE430491ABFEA6FFC28FFB2EBD713F95460BEDE5C62D27E426A98439C997CAA09362A4E65196E8E1732019937C3769BD4786B89E7AAC2542843659D9ADA7B7E962A427141FA71BA4F2F851541A353B2F449FE98C79ACD0203010001
+        INFLUX_URL: http://neev3.trizlabz.com:8086
+        INFLUX_TOKEN: Alpty_r2NC6MOASy5f1lXs0reAFvZ832kUqHzIBCQWm1naoBbbG3tiB9lFunsR2ASBEgsURODDHiAXGOaRiriw==
+        INFLUX_ORG: trizlabz
+        NEXT_PUBLIC_INFLUX_URL: /influxdb
+        NEXT_PUBLIC_INFLUX_TOKEN: Alpty_r2NC6MOASy5f1lXs0reAFvZ832kUqHzIBCQWm1naoBbbG3tiB9lFunsR2ASBEgsURODDHiAXGOaRiriw==
+        NEXT_PUBLIC_INFLUX_ORG: trizlabz
+    image: fmscore-frontend:latest
     container_name: fmscore-frontend
     environment:
       - INFLUX_URL=http://neev3.trizlabz.com:8086
@@ -365,7 +419,10 @@ services:
       - fmsnet
 
   db-manager:
-    image: fms-db-manager:fms-1.1
+    build:
+      context: ./FMS-db-manager
+      dockerfile: Dockerfile.prod
+    image: fms-db-manager:latest
     container_name: db-manager
     ports:
       - "8012:8012"
@@ -392,6 +449,9 @@ services:
       - fmsnet
 
   ota-update-service:
+    build:
+      context: ./FMS-OTA-Update
+      dockerfile: Dockerfile.prod
     image: fms-ota-update-service:latest
     container_name: ota-update-service
     ports:
@@ -416,9 +476,11 @@ services:
     networks:
       - fmsnet
 
+
 volumes:
   nginx_cache:
   nginx_logs:
+
 
 networks:
   fmsnet:

@@ -28,12 +28,6 @@ services:
         condition: service_started
       traffic-management-service:
         condition: service_started
-      ota-update-service:
-        condition: service_started
-      db-manager:
-        condition: service_started
-      log-service:
-        condition: service_started
     restart: unless-stopped
     ulimits:
       nofile:
@@ -350,101 +344,8 @@ services:
     networks:
       - fmsnet
 
-  ota-update-service:
-    build:
-      context: ../FMS-OTA-Update
-      dockerfile: Dockerfile
-    image: fms-ota-update-service:latest
-    container_name: ota-update-service
-    user: root
-    ports:
-      - "8012:8012"
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-      - $HOME/FMS-localstorage/updates:/usr/src/app/uploads
-      - ../certs/internal/ota-update-service.crt:/etc/service-certs/cert.crt:ro
-      - ../certs/internal/ota-update-service.key:/etc/service-certs/cert.key:ro
-    environment:
-      - PORT=8012
-      - DB_HOST=host.docker.internal
-      - DB_PORT=5432
-      - DB_USER=admin
-      - DB_PASSWORD=password
-      - DB_NAME=ota_service
-      - ENABLE_HTTPS=true
-      - SSL_CERT_PATH=/etc/service-certs/cert.crt
-      - SSL_KEY_PATH=/etc/service-certs/cert.key
-      - CORS_ORIGINS=["http://localhost:5173","http://localhost:3000","https://localhost:8443","https://192.168.0.125:8443"]
-      - API_GATEWAY_URL=https://host.docker.internal:8443
-      - MONGO_URL=mongodb://admin:password@host.docker.internal:27017/admin
-      - CLOUD_URL=http://192.168.0.125:8020
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
-    restart: unless-stopped
-    networks:
-      - fmsnet
-
-  db-manager:
-    build:
-      context: ./FMS-db-manager
-      dockerfile: Dockerfile.prod
-    image: fms-db-manager:latest
-    container_name: db-manager
-    ports:
-      - "8012:8012"
-    environment:
-      - PORT=8012
-      - INFLUX_URL=http://host.docker.internal:8086
-      - INFLUX_TOKEN=tovrpN8MZ2RbzDDViK5WEGS77u7VqtAQvVEuEQ8RxHig8q373j3sPXkLOqfmRgrrpwWj-V8Uaj60qzlPAvaSFA==
-      - INFLUX_ORG=trizlabz
-      - INFLUX_BUCKET=device_core
-      - DATABASE_DEVICES_URL=postgresql://admin:password@host.docker.internal:5432/devices
-      - DATABASE_TRAFFIC_URL=postgresql://admin:password@host.docker.internal:5432/traffic_management
-      - DATABASE_ALERTS_URL=postgresql://admin:password@host.docker.internal:5432/alerts_db
-      - DATABASE_APPLICATIONS_URL=postgresql://admin:password@host.docker.internal:5432/applications
-      - DATABASE_DASHBOARD_URL=postgresql://admin:password@host.docker.internal:5432/dashboard
-      - DATABASE_DEPLOYMENT_URL=postgresql://admin:password@host.docker.internal:5432/deployment
-      - DATABASE_MISSIONS_URL=postgresql://admin:password@host.docker.internal:5432/missions
-      - DATABASE_OTA_SERVICE_URL=postgresql://admin:password@host.docker.internal:5432/ota_service
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
-    restart: unless-stopped
-    networks:
-      - fmsnet
-
-  log-service:
-    build:
-      context: ./FMS-log-service
-      dockerfile: Dockerfile.prod
-    image: fms-log-service:latest
-    container_name: log-service
-    ports:
-      - "8011:8011"
-    volumes:
-      - ./certs/internal/log-service.crt:/etc/service-certs/cert.crt:ro
-      - ./certs/internal/log-service.key:/etc/service-certs/cert.key:ro
-    environment:
-      - NODE_ENV=production
-      - PORT=8011
-      - DB_HOST=host.docker.internal
-      - DB_PORT=5432
-      - DB_USERNAME=admin
-      - DB_PASSWORD=password
-      - DB_DATABASE=fms_history_db
-      - CORS_ORIGINS=["http://localhost:5173","http://localhost:3000","https://localhost:8443","https://192.168.147.208:8443"]
-      - ENABLE_HTTPS=true
-      - SSL_CERT_PATH=/etc/service-certs/cert.crt
-      - SSL_KEY_PATH=/etc/service-certs/cert.key
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
-    restart: unless-stopped
-    networks:
-      - fmsnet
-
-
 volumes:
   nginx_cache:
-  nginx_logs:
 
 networks:
   fmsnet:
