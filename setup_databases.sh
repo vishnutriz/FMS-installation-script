@@ -492,19 +492,31 @@ fi
 if [ "$RUN_POSTGRES" = true ]; then
     print_header "PostgreSQL Schema Import"
 
-    # Check for schema file
+    # Check for schema files
     SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-    SCHEMA_FILE="${SCRIPT_DIR}/db_schemas/all_schemas.sql"
+    
+    # Use nullglob to safely find all _schema.sql files
+    shopt -s nullglob
+    SCHEMA_FILES=("$SCRIPT_DIR/schema"/*_schema.sql)
+    shopt -u nullglob
 
-    if [ ! -f "$SCHEMA_FILE" ]; then
-        log_error "Schema file not found: $SCHEMA_FILE"
-        log_info "Please place your PostgreSQL dump in db_schemas/all_schemas.sql"
+    if [ ${#SCHEMA_FILES[@]} -eq 0 ]; then
+        log_error "No schema files found in ${SCRIPT_DIR}/schema"
         exit 1
     fi
 
+    # Build list of database names from schema files
+    DB_LIST=""
+    for sql_file in "${SCHEMA_FILES[@]}"; do
+        filename=$(basename "$sql_file")
+        DB_NAME=${filename%_schema.sql}
+        DB_LIST="${DB_LIST} '${DB_NAME}',"
+    done
+    DB_LIST=${DB_LIST%,} # remove trailing comma
+
     # Check if databases already exist
     log_info "Checking for existing PostgreSQL databases..."
-    EXISTING_DBS=$(sudo -u postgres psql -t -c "SELECT datname FROM pg_database WHERE datname IN ('alerts', 'applications', 'dashboard', 'deployment', 'devices', 'missions', 'traffic_management');" | xargs)
+    EXISTING_DBS=$(sudo -u postgres psql -t -c "SELECT datname FROM pg_database WHERE datname IN (${DB_LIST});" | xargs)
 
     if [ -n "$EXISTING_DBS" ]; then
         log_warning "The following databases already exist: $EXISTING_DBS"
@@ -519,7 +531,7 @@ if [ "$RUN_POSTGRES" = true ]; then
             IMPORT_PG=false
         fi
     else
-        log_info "Found schema file: $SCHEMA_FILE"
+        log_info "Found schema files in ${SCRIPT_DIR}/schema"
         echo ""
         echo -n "Do you want to import PostgreSQL schemas now? (y/n): "
         read -n 1 -r
@@ -535,18 +547,38 @@ if [ "$RUN_POSTGRES" = true ]; then
         log_info "Importing PostgreSQL schemas..."
         log_warning "This may take a few minutes..."
         
-        # Import as postgres superuser
-        sudo -u postgres psql < "$SCHEMA_FILE" > /tmp/pg_import.log 2>&1
+        > /tmp/pg_import.log # reset and clear the log file
         
-        if [ $? -eq 0 ]; then
-            log_success "PostgreSQL schemas imported successfully."
-        else
-            log_warning "PostgreSQL import completed with warnings. Check /tmp/pg_import.log for details."
-        fi
+        for sql_file in "${SCHEMA_FILES[@]}"; do
+            filename=$(basename "$sql_file")
+            DB_NAME=${filename%_schema.sql}
+            
+            log_info "Processing database: $DB_NAME"
+            
+            # Check if this specific DB exists
+            DB_EXISTS=$(sudo -u postgres psql -t -c "SELECT 1 FROM pg_database WHERE datname = '$DB_NAME';" | xargs)
+            if [ -n "$DB_EXISTS" ]; then
+                log_info "  Dropping existing database: $DB_NAME"
+                sudo -u postgres psql -c "SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = '$DB_NAME' AND pid <> pg_backend_pid();" >> /tmp/pg_import.log 2>&1
+                sudo -u postgres psql -c "DROP DATABASE \"$DB_NAME\";" >> /tmp/pg_import.log 2>&1
+            fi
+            
+            log_info "  Creating database: $DB_NAME"
+            sudo -u postgres psql -c "CREATE DATABASE \"$DB_NAME\";" >> /tmp/pg_import.log 2>&1
+            
+            log_info "  Importing schema for $DB_NAME..."
+            sudo -u postgres psql -d "$DB_NAME" < "$sql_file" >> /tmp/pg_import.log 2>&1
+            
+            if [ $? -ne 0 ]; then
+                log_error "  Failed to import schema for $DB_NAME. See /tmp/pg_import.log."
+            else
+                log_success "  Imported schema for $DB_NAME successfully."
+            fi
+        done
         
-        # List created databases
-        log_info "Databases created:"
-        sudo -u postgres psql -c "\l" | grep -E "(alerts|applications|dashboard|deployment|devices|missions|traffic)" || true
+        # List updated databases
+        log_info "Databases currently in PostgreSQL:"
+        sudo -u postgres psql -c "\l" | grep -v "template" | head -n 15 || true
     else
         log_info "PostgreSQL schema import skipped."
     fi

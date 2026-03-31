@@ -265,6 +265,7 @@ services:
   traffic-management-service:
     image: fms-traffic-management-service:fms-1.1
     container_name: traffic-management-service
+    user: root
     ports:
       - "8009:8009"
     volumes:

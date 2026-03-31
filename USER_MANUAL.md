@@ -155,5 +155,5 @@ Run the following commands to ensure everything is running:
     *   *Fix*: Ensure you have sudo rights. Do NOT run with `sudo ./install_all.sh`. Run `./install_all.sh` and let it ask for the password.
 *   **Error**: "MongoDB is not running" during configuration.
     *   *Fix*: Start it manually: `sudo systemctl start mongod`.
-*   **Error**: "Schema file not found".
-    *   *Fix*: Ensure the `db_schemas` folder is present in the installation directory.
+*   **Error**: "Schema files not found".
+    *   *Fix*: Ensure the `schema` folder is present in the installation directory and contains the required `.sql` files.

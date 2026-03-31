@@ -113,9 +113,27 @@ run_sudo_script "install_mosquitto.sh"
 
 # 7. Configure Databases (Mongo, Postgres, Influx)
 echo ""
-log_info ">>> Step 7/7: Database Configuration"
+log_info ">>> Step 7/9: Database Configuration"
 log_info "Starts interactive setup for MongoDB, PostgreSQL, and InfluxDB..."
 run_sudo_script "setup_databases.sh"
+
+# 8. Download and Load Docker Images
+echo ""
+log_info ">>> Step 8/9: Downloading and Loading FMS Docker Images"
+./download_and_load.sh
+if [ $? -ne 0 ]; then 
+    log_error "Failed to download and load images."
+    FAILED_SCRIPTS+=("download_and_load.sh")
+fi
+
+# 9. Setup FMS Environment
+echo ""
+log_info ">>> Step 9/9: Setting up FMS Deployment Environment"
+./setup_fms.sh
+if [ $? -ne 0 ]; then 
+    log_error "FMS setup failed."
+    FAILED_SCRIPTS+=("setup_fms.sh")
+fi
 
 echo ""
 if [ ${#FAILED_SCRIPTS[@]} -eq 0 ]; then
