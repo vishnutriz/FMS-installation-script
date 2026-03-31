@@ -129,7 +129,7 @@ services:
       - ENABLE_HTTPS=true
       - SSL_CERT_PATH=/etc/service-certs/cert.crt
       - SSL_KEY_PATH=/etc/service-certs/cert.key
-      - MQTT_BROKER_HOST=10.122.72.153
+      - MQTT_BROKER_HOST=192.168.0.103
       - MQTT_CA_CERT_PATH=/etc/mqtt-certs/ca.crt
       - MQTT_CLIENT_CERT_PATH=/etc/mqtt-certs/client.crt
       - MQTT_CLIENT_KEY_PATH=/etc/mqtt-certs/client.key
@@ -357,7 +357,7 @@ services:
     image: fmscore-frontend:fms-1.1
     container_name: fmscore-frontend
     environment:
-      - INFLUX_URL=http://10.122.72.153:8086
+      - INFLUX_URL=http://neev3.trizlabz.com:8086
       # - INFLUX_TOKEN=Alpty_r2NC6MOASy5f1lXs0reAFvZ832kUqHzIBCQWm1naoBbbG3tiB9lFunsR2ASBEgsURODDHiAXGOaRiriw==
       - INFLUX_TOKEN=tovrpN8MZ2RbzDDViK5WEGS77u7VqtAQvVEuEQ8RxHig8q373j3sPXkLOqfmRgrrpwWj-V8Uaj60qzlPAvaSFA==
       - INFLUX_ORG=trizlabz
