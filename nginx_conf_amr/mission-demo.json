@@ -1,0 +1,11 @@
+{
+  "name": "Line Audit AM",
+  "missionId": "m-demo-001",
+  "deploymentId": "dep-001",
+  "zoneId": "zone-001",
+  "customerId": "f1fc8c5a086146b88419e939acc6f405",
+  "waypoints": [
+    { "pointId": "P-1", "label": "Start", "order": 1, "tasks": {} },
+    { "pointId": "P-2", "label": "Check", "order": 2, "tasks": { "inspect": "ok" } }
+  ]
+}

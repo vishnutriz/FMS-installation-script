@@ -1,0 +1,39 @@
+services:
+    traffic-management-service:
+      build: ../traffic-management-service
+      ports:
+        - "8009:8009"
+      volumes:
+        - ../certs/internal/traffic-management-service.crt:/etc/service-certs/cert.crt:ro
+        - ../certs/internal/traffic-management-service.key:/etc/service-certs/cert.key:ro
+        - $HOME/FMS-localstorage/license:/app/license:ro
+        - /sys:/sys:ro
+      environment:
+        - NODE_ENV=production
+        - PORT=8009
+        - DATABASE_URL=postgresql://admin:password@host.docker.internal:5432/traffic_management
+        - KAFKA_BROKERS=host.docker.internal:9092
+        - KAFKA_CLIENT_ID=traffic-management-service
+        - KAFKA_GROUP_ID=traffic-management-group
+        - CORS_ORIGINS=["http://localhost:5173","http://localhost:3000","https://localhost:8443"]
+        - FMS_MISSION_SERVICE_URL=https://mission-service:8005
+        - FMS_DEVICE_CORE_URL=https://device-core:8004
+        - DEPLOYMENT_SERVICE_URL=https://deployment-service:8006/api
+        - PG_HOST=host.docker.internal
+        - PG_PORT=5432
+        - PG_USER=admin
+        - PG_PASSWORD=password
+        - PG_DATABASE=traffic_management
+        - ENABLE_HTTPS=true
+        - SSL_CERT_PATH=/etc/service-certs/cert.crt
+        - SSL_KEY_PATH=/etc/service-certs/cert.key
+        - LICENSE_PATH=/app/license/license.lic
+      extra_hosts:
+        - "host.docker.internal:host-gateway"
+      restart: unless-stopped
+      networks:
+        - fmsnet
+
+networks:
+  fmsnet:
+    driver: bridge
