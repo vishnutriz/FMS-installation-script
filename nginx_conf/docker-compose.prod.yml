@@ -177,8 +177,6 @@ services:
     image: fms-deployment-service:fms-1.1
     container_name: deployment-service
     user: root
-    env_file:
-      - ./FMS-deployment-service/.env
     volumes:
       - ./certs/internal/deployment-service.crt:/etc/service-certs/cert.crt:ro
       - ./certs/internal/deployment-service.key:/etc/service-certs/cert.key:ro
@@ -310,8 +308,6 @@ services:
     volumes:
       - ./certs/internal/analytics-service.crt:/etc/service-certs/cert.crt:ro
       - ./certs/internal/analytics-service.key:/etc/service-certs/cert.key:ro
-    env_file:
-      - ./FMS-analytics-services/.env
     environment:
       - TZ=Asia/Kolkata
       - DATABASE_URL=postgresql://admin:password@host.docker.internal:5432/traffic_management?schema=public
@@ -357,7 +353,7 @@ services:
     image: fmscore-frontend:fms-1.1
     container_name: fmscore-frontend
     environment:
-      - INFLUX_URL=http://10.122.72.153:8086
+      - INFLUX_URL=http://localhost:8086
       # - INFLUX_TOKEN=Alpty_r2NC6MOASy5f1lXs0reAFvZ832kUqHzIBCQWm1naoBbbG3tiB9lFunsR2ASBEgsURODDHiAXGOaRiriw==
       - INFLUX_TOKEN=tovrpN8MZ2RbzDDViK5WEGS77u7VqtAQvVEuEQ8RxHig8q373j3sPXkLOqfmRgrrpwWj-V8Uaj60qzlPAvaSFA==
       - INFLUX_ORG=trizlabz
