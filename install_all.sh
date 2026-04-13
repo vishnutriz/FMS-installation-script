@@ -36,7 +36,7 @@ fi
 
 # 1. Install Node.js (Run as current user)
 echo ""
-log_info ">>> Step 1/6: Node.js & Next.js"
+log_info ">>> Step 1/10: Node.js & Next.js"
 ./install_node.sh
 if [ $? -ne 0 ]; then log_error "Node.js installation failed. Aborting."; exit 1; fi
 
@@ -111,24 +111,27 @@ run_sudo_script "install_kafka.sh"
 # 6. Mosquitto
 run_sudo_script "install_mosquitto.sh"
 
-# 7. Configure Databases (Mongo, Postgres, Influx)
+# 7. Install Docker Engine
+run_sudo_script "install_docker.sh"
+
+# 8. Configure Databases (Mongo, Postgres, Influx)
 echo ""
-log_info ">>> Step 7/9: Database Configuration"
+log_info ">>> Step 8/10: Database Configuration"
 log_info "Starts interactive setup for MongoDB, PostgreSQL, and InfluxDB..."
 run_sudo_script "setup_databases.sh"
 
-# 8. Download and Load Docker Images
+# 9. Download and Load Docker Images
 echo ""
-log_info ">>> Step 8/9: Downloading and Loading FMS Docker Images"
+log_info ">>> Step 9/10: Downloading and Loading FMS Docker Images"
 ./download_and_load.sh
 if [ $? -ne 0 ]; then 
     log_error "Failed to download and load images."
     FAILED_SCRIPTS+=("download_and_load.sh")
 fi
 
-# 9. Setup FMS Environment
+# 10. Setup FMS Environment
 echo ""
-log_info ">>> Step 9/9: Setting up FMS Deployment Environment"
+log_info ">>> Step 10/10: Setting up FMS Deployment Environment"
 ./setup_fms.sh
 if [ $? -ne 0 ]; then 
     log_error "FMS setup failed."
