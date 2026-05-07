@@ -1,0 +1,20 @@
+How to fix it (on that system):
+To resolve this, you need to remove the duplicate or broken entry:
+
+Find the conflicting files: Run this command to see which files contain the InfluxDB repository URL:
+
+bash
+grep -r "influxdata.com" /etc/apt/sources.list /etc/apt/sources.list.d/
+Remove the extra files: Usually, you'll find an old file like /etc/apt/sources.list.d/influx.list or a typo-ridden one. Delete it:
+
+bash
+sudo rm /etc/apt/sources.list.d/name-of-the-old-file.list
+Clean up and Retry: Once the duplicates are gone, your installation script should run successfully. The script you have here (at line 46-48) already tries to do some cleanup:
+
+bash
+rm -f /etc/apt/trusted.gpg.d/influxdata-archive_compat.gpg
+rm -f /etc/apt/keyrings/influxdata-archive.gpg
+rm -f /etc/apt/sources.list.d/influxdata.list
+However, if the conflicting entry is in a file with a different name (like influxdb.list or the main sources.list), the script won't catch it automatically.
+
+13:52
