@@ -27,6 +27,13 @@ chmod +x *.sh
 ./install_all.sh
 ```
 
+**Options:**
+- **Skip Docker**: To install everything except downloading and loading Docker images:
+  ```bash
+  ./install_all.sh --skip-docker
+  ```
+  *(Alternatively, you will be prompted interactively during execution if you want to download and load the Docker images).*
+
 ### 3. Running Individually
 
 If you prefer to install only specific components:

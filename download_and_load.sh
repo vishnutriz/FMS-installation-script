@@ -4,6 +4,80 @@
 LINKS_FILE="Text File.txt"
 DOWNLOAD_DIR="docker_images"
 
+# -------------------------------------------------------------
+# Check and Install Docker
+# -------------------------------------------------------------
+echo "Checking if Docker is installed..."
+if ! command -v docker &> /dev/null; then
+    echo "Docker not found. Installing Docker..."
+
+    # Identify conflicting packages that are actually installed to remove them safely
+    CONFLICTS="docker.io docker-compose docker-compose-v2 docker-doc podman-docker containerd runc"
+    INSTALLED_CONFLICTS=""
+    for pkg in $CONFLICTS; do
+        if dpkg -l "$pkg" &>/dev/null; then
+            INSTALLED_CONFLICTS="$INSTALLED_CONFLICTS $pkg"
+        fi
+    done
+
+    if [ -n "$INSTALLED_CONFLICTS" ]; then
+        echo "Removing conflicting packages: $INSTALLED_CONFLICTS..."
+        sudo apt-get remove -y $INSTALLED_CONFLICTS
+    fi
+
+    # Add Docker's official GPG key:
+    echo "Adding Docker official repository..."
+    sudo apt-get update
+    sudo apt-get install -y ca-certificates curl
+    sudo install -m 0755 -d /etc/apt/keyrings
+    sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
+    sudo chmod a+r /etc/apt/keyrings/docker.asc
+
+    # Add the repository to Apt sources:
+    sudo tee /etc/apt/sources.list.d/docker.sources <<EOF
+Types: deb
+URIs: https://download.docker.com/linux/ubuntu
+Suites: $(. /etc/os-release && echo "${UBUNTU_CODENAME:-$VERSION_CODENAME}")
+Components: stable
+Architectures: $(dpkg --print-architecture)
+Signed-By: /etc/apt/keyrings/docker.asc
+EOF
+
+    sudo apt-get update
+
+    echo "Installing Docker CE..."
+    sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+
+    # Enable and start docker service
+    sudo systemctl enable docker
+    sudo systemctl start docker
+
+    # Verify installation
+    if command -v docker &> /dev/null; then
+        echo "Docker installed successfully!"
+        sudo docker run --rm hello-world
+    else
+        echo "Error: Docker installation failed."
+        exit 1
+    fi
+else
+    echo "Docker is already installed."
+fi
+
+# Add current user to docker group if not already present
+REAL_USER=${SUDO_USER:-$USER}
+if [ "$REAL_USER" != "root" ]; then
+    if groups "$REAL_USER" | grep -q "\bdocker\b"; then
+        echo "User '$REAL_USER' is already in the 'docker' group."
+    else
+        echo "Adding user '$REAL_USER' to the 'docker' group..."
+        sudo usermod -aG docker "$REAL_USER"
+        echo "User '$REAL_USER' added to 'docker' group."
+        echo "Note: You may need to log out and log back in (or run 'newgrp docker') for the group membership to take effect."
+    fi
+fi
+# -------------------------------------------------------------
+
 # Ensure the download directory exists
 mkdir -p "$DOWNLOAD_DIR"
 

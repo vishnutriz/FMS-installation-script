@@ -27,7 +27,7 @@ COMPOSE_DEST="$FMS_DIR/docker-compose.prod.yml"
 echo "Editing docker-compose.prod.yml to use IP: $SERVER_IP..."
 
 # Replace the specific InfluxDB URL for fmscore-frontend
-sed -i "s|INFLUX_URL=http://neev3.trizlabz.com:8086|INFLUX_URL=http://${SERVER_IP}:8086|g" "$COMPOSE_DEST"
+sed -i "s|INFLUX_URL=http://[IP_ADDRESS]|INFLUX_URL=http://${SERVER_IP}:8086|g" "$COMPOSE_DEST"
 
 # Replace the MQTT Broker Host IP for device-core
 sed -i "s|MQTT_BROKER_HOST=192.168.0.103|MQTT_BROKER_HOST=${SERVER_IP}|g" "$COMPOSE_DEST"

@@ -5,6 +5,35 @@
 
 source ./utils.sh
 
+# Parse options
+SKIP_DOCKER=false
+
+show_help() {
+    echo "Usage: ./install_all.sh [options]"
+    echo ""
+    echo "Options:"
+    echo "  --skip-docker, --no-docker   Skip downloading and loading FMS Docker images."
+    echo "  -h, --help                   Show this help message and exit."
+    echo ""
+}
+
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --skip-docker|--no-docker)
+            SKIP_DOCKER=true
+            shift
+            ;;
+        -h|--help)
+            show_help
+            exit 0
+            ;;
+        *)
+            # Ignore other arguments
+            shift
+            ;;
+    esac
+done
+
 # Initialize log file with permissive permissions
 # This allows both user-level and root-level scripts to write to it
 LOG_FILE="install_env.log"
@@ -120,10 +149,20 @@ run_sudo_script "setup_databases.sh"
 # 8. Download and Load Docker Images
 echo ""
 log_info ">>> Step 8/9: Downloading and Loading FMS Docker Images"
-./download_and_load.sh
-if [ $? -ne 0 ]; then 
-    log_error "Failed to download and load images."
-    FAILED_SCRIPTS+=("download_and_load.sh")
+if [ "$SKIP_DOCKER" = "true" ]; then
+    log_info "Skipping Docker image download and load as requested."
+else
+    read -p "Do you want to download and load FMS Docker images? (y/n) [y]: " -n 1 -r CHOICE_DOCKER
+    echo ""
+    if [[ -z "$CHOICE_DOCKER" || "$CHOICE_DOCKER" =~ ^[Yy]$ ]]; then
+        ./download_and_load.sh
+        if [ $? -ne 0 ]; then 
+            log_error "Failed to download and load images."
+            FAILED_SCRIPTS+=("download_and_load.sh")
+        fi
+    else
+        log_info "Skipping Docker image download and load."
+    fi
 fi
 
 # 9. Setup FMS Environment

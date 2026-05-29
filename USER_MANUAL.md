@@ -32,6 +32,18 @@ Run the master script:
 
 **Note**: If prompted for a password, enter your user's `sudo` password.
 
+### Skipping Docker Installation
+If you want to set up the device with all databases and environment configs but do not want to download or load Docker images:
+*   **Via Command Line**: Run with the `--skip-docker` or `--no-docker` flag:
+    ```bash
+    ./install_all.sh --skip-docker
+    ```
+*   **Interactively**: When the installer reaches Step 8, it will prompt you:
+    ```
+    Do you want to download and load FMS Docker images? (y/n) [y]:
+    ```
+    Simply type `n` and press Enter to skip.
+
 ## Step 2: Component Installation
 
 The script will automatically install the following software components. You do not need to interact with these steps unless an error occurs.

@@ -65,7 +65,18 @@ fi
 
 # 2. Create Sources List
 log_info "Adding MongoDB repository..."
-echo "deb [ arch=amd64,arm64 signed-by=/usr/share/keyrings/mongodb-server-7.0.gpg ] https://repo.mongodb.org/apt/ubuntu jammy/mongodb-org/7.0 multiverse" | \
+OS_CODENAME=$(lsb_release -cs 2>/dev/null)
+if [ -z "$OS_CODENAME" ]; then
+    OS_CODENAME=$(grep VERSION_CODENAME /etc/os-release | cut -d= -f2 | tr -d '"')
+fi
+
+# MongoDB 7.0 supports jammy and noble. Fall back to jammy if unsupported/unknown.
+if [ "$OS_CODENAME" != "jammy" ] && [ "$OS_CODENAME" != "noble" ]; then
+    log_warning "OS version '$OS_CODENAME' detected. Defaulting MongoDB 7.0 repository to 'jammy'."
+    OS_CODENAME="jammy"
+fi
+
+echo "deb [ arch=amd64,arm64 signed-by=/usr/share/keyrings/mongodb-server-7.0.gpg ] https://repo.mongodb.org/apt/ubuntu ${OS_CODENAME}/mongodb-org/7.0 multiverse" | \
     tee /etc/apt/sources.list.d/mongodb-org-7.0.list
 
 # 3. Update & Install

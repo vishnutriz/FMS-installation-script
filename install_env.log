@@ -119,3 +119,75 @@ Installation started at Fri Mar 13 11:35:36 UTC 2026
 [INFO] gnupg not found. Installing gnupg...
 [INFO] Downloading and verifying InfluxData GPG key...
 [ERROR] GPG Key verification FAILED. The downloaded key does not match the official fingerprint.
+==========================================
+Installation started at Friday 08 May 2026 02:31:22 PM IST
+==========================================
+[ERROR] This script must be run as root (use sudo).
+==========================================
+Installation started at Friday 08 May 2026 02:31:35 PM IST
+==========================================
+[INFO] Checking internet connectivity...
+[SUCCESS] Internet connection active.
+[SUCCESS] Mosquitto is already installed.
+[WARNING] Mosquitto is installed but certificates are missing or incomplete.
+[INFO] Adding Mosquitto PPA (ppa:mosquitto-dev/mosquitto-ppa)...
+[SUCCESS] Mosquitto PPA added.
+[INFO] Updating package lists...
+[INFO] Installing Mosquitto and clients...
+[ERROR] Failed to install Mosquitto.
+==========================================
+Installation started at Friday 08 May 2026 02:35:49 PM IST
+==========================================
+[INFO] Checking internet connectivity...
+[SUCCESS] Internet connection active.
+[SUCCESS] Mosquitto is already installed.
+[WARNING] Mosquitto is installed but certificates are missing or incomplete.
+[INFO] Skipping installation steps as Mosquitto is already present.
+[INFO] Configuring Mosquitto for TLS/SSL...
+[INFO] Mosquitto needs to be configured with a listener bind address.
+[INFO] This IP will be used to bind the MQTT listener.
+[INFO] Detected IP address: 192.168.0.115
+[INFO] Configuring Mosquitto with listener on 192.168.0.115:8883
+[SUCCESS] Backup created: /etc/mosquitto/mosquitto.conf.backup.20260508_143604
+[SUCCESS] Mosquitto configuration updated successfully.
+[INFO] Setting up SSL/TLS certificates...
+[INFO] Copying certificates from /home/tl5ndyf5/FMS-installation-script/mosquitto_certs...
+[SUCCESS] Certificates copied and permissions set successfully.
+[INFO] Restarting Mosquitto service...
+[INFO] Checking Mosquitto service...
+[SUCCESS] Mosquitto service is active (running).
+[SUCCESS] Mosquitto has been configured with TLS/SSL.
+[INFO] Listener: 192.168.0.115:8883
+[INFO] TLS/SSL: Enabled with client certificate authentication
+[INFO] Anonymous access: Disabled
+[INFO] Certificates: Copied from /home/tl5ndyf5/FMS-installation-script/mosquitto_certs
+[INFO] Certificate location: /etc/mosquitto/certs
+[INFO] Mosquitto service is running and ready to accept secure connections.
+==========================================
+Installation started at Friday 08 May 2026 02:39:23 PM IST
+==========================================
+[INFO] Checking internet connectivity...
+[SUCCESS] Internet connection active.
+[SUCCESS] Mosquitto is already installed.
+[SUCCESS] Mosquitto certificates already present.
+[INFO] Skipping installation steps as Mosquitto is already present.
+[INFO] Configuring Mosquitto for TLS/SSL...
+[INFO] Mosquitto needs to be configured with a listener bind address.
+[INFO] Use 0.0.0.0 to listen on all interfaces (recommended for Docker compatibility).
+[INFO] Detected local IP: 192.168.0.115
+[INFO] Configuring Mosquitto with listener on 0.0.0.0:8883
+[SUCCESS] Backup created: /etc/mosquitto/mosquitto.conf.backup.20260508_143927
+[SUCCESS] Mosquitto configuration updated successfully.
+[INFO] Setting up SSL/TLS certificates...
+[INFO] Copying certificates from /home/tl5ndyf5/FMS-installation-script/mosquitto_certs...
+[SUCCESS] Certificates copied and permissions set successfully.
+[INFO] Restarting Mosquitto service...
+[INFO] Checking Mosquitto service...
+[SUCCESS] Mosquitto service is active (running).
+[SUCCESS] Mosquitto has been configured with TLS/SSL.
+[INFO] Listener: 0.0.0.0:8883
+[INFO] TLS/SSL: Enabled with client certificate authentication
+[INFO] Anonymous access: Disabled
+[INFO] Certificates: Copied from /home/tl5ndyf5/FMS-installation-script/mosquitto_certs
+[INFO] Certificate location: /etc/mosquitto/certs
+[INFO] Mosquitto service is running and ready to accept secure connections.

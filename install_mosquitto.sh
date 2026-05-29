@@ -20,6 +20,7 @@ fi
 
 # Check if Mosquitto is already installed (multiple methods)
 MOSQUITTO_INSTALLED=false
+SKIP_INSTALL=false
 
 # Method 1: Check if mosquitto command exists
 if command_exists mosquitto; then
@@ -53,7 +54,7 @@ if [ "$MOSQUITTO_INSTALLED" = true ]; then
             log_info "Skipping Mosquitto configuration."
             exit 0
         fi
-        # Continue to configuration section
+        SKIP_INSTALL=true
     else
         log_success "Mosquitto certificates already present."
         echo -n "Do you want to reconfigure Mosquitto? (y/n): "
@@ -63,37 +64,40 @@ if [ "$MOSQUITTO_INSTALLED" = true ]; then
             log_info "Skipping Mosquitto configuration."
             exit 0
         fi
-        # Continue to configuration section
+        SKIP_INSTALL=true
     fi
 fi
 
-# 1. Add Mosquitto PPA
-log_info "Adding Mosquitto PPA (ppa:mosquitto-dev/mosquitto-ppa)..."
-# -y flag automatically confirms prompts
-add-apt-repository -y ppa:mosquitto-dev/mosquitto-ppa
-if [ $? -eq 0 ]; then
-    log_success "Mosquitto PPA added."
+if [ "$SKIP_INSTALL" = false ]; then
+    # 1. Add Mosquitto PPA
+    log_info "Adding Mosquitto PPA (ppa:mosquitto-dev/mosquitto-ppa)..."
+    add-apt-repository -y ppa:mosquitto-dev/mosquitto-ppa
+    if [ $? -eq 0 ]; then
+        log_success "Mosquitto PPA added."
+    else
+        log_error "Failed to add Mosquitto PPA."
+        exit 1
+    fi
+
+    # 2. Update Package Lists
+    log_info "Updating package lists..."
+    apt-get update > /dev/null 2>&1
+
+    # 3. Install Mosquitto
+    log_info "Installing Mosquitto and clients..."
+    DEBIAN_FRONTEND=noninteractive apt-get install -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" mosquitto mosquitto-clients &
+    PID=$!
+    show_spinner $PID
+    wait $PID
+
+    if [ $? -eq 0 ]; then
+        log_success "Mosquitto installed."
+    else
+        log_error "Failed to install Mosquitto."
+        exit 1
+    fi
 else
-    log_error "Failed to add Mosquitto PPA."
-    exit 1
-fi
-
-# 2. Update Package Lists
-log_info "Updating package lists..."
-apt-get update > /dev/null 2>&1
-
-# 3. Install Mosquitto
-log_info "Installing Mosquitto and clients..."
-apt-get install -y mosquitto mosquitto-clients &
-PID=$!
-show_spinner $PID
-wait $PID
-
-if [ $? -eq 0 ]; then
-    log_success "Mosquitto installed."
-else
-    log_error "Failed to install Mosquitto."
-    exit 1
+    log_info "Skipping installation steps as Mosquitto is already present."
 fi
 
 # 4. Configure mosquitto.conf with TLS settings
@@ -108,14 +112,14 @@ fi
 # Prompt user for listener bind address
 echo ""
 log_info "Mosquitto needs to be configured with a listener bind address."
-log_info "This IP will be used to bind the MQTT listener."
-log_info "Detected IP address: $CURRENT_IP"
-echo -n "Enter listener bind address (press Enter for $CURRENT_IP): "
+log_info "Use 0.0.0.0 to listen on all interfaces (recommended for Docker compatibility)."
+log_info "Detected local IP: $CURRENT_IP"
+echo -n "Enter listener bind address (press Enter for 0.0.0.0): "
 read USER_IP
 
-# Use detected IP if user didn't provide one
+# Use 0.0.0.0 if user didn't provide one
 if [ -z "$USER_IP" ]; then
-    BIND_IP="$CURRENT_IP"
+    BIND_IP="0.0.0.0"
 else
     BIND_IP="$USER_IP"
 fi
