@@ -70,8 +70,12 @@ if [ -z "$OS_CODENAME" ]; then
     OS_CODENAME=$(grep VERSION_CODENAME /etc/os-release | cut -d= -f2 | tr -d '"')
 fi
 
-# MongoDB 7.0 supports jammy and noble. Fall back to jammy if unsupported/unknown.
-if [ "$OS_CODENAME" != "jammy" ] && [ "$OS_CODENAME" != "noble" ]; then
+# MongoDB 7.0 does not have an official repository for Ubuntu 24.04 (noble).
+# The Ubuntu 22.04 (jammy) packages are fully compatible since both use libssl3.
+if [ "$OS_CODENAME" = "noble" ]; then
+    log_info "Ubuntu 24.04 (noble) detected. Using Ubuntu 22.04 (jammy) repository for MongoDB 7.0 compatibility."
+    OS_CODENAME="jammy"
+elif [ "$OS_CODENAME" != "jammy" ]; then
     log_warning "OS version '$OS_CODENAME' detected. Defaulting MongoDB 7.0 repository to 'jammy'."
     OS_CODENAME="jammy"
 fi
